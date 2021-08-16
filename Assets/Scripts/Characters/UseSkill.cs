@@ -1,40 +1,49 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class UseSkill : MonoBehaviour
 {
     public SpriteRenderer selected;
-    private Transform caster;
+    public Transform target;
     public GameObject range;
-    public float skillRange;
-    private Vector3 target;
-    private float speed = 10.0f;
-    private bool active = false;
-    private Vector3 mouseDragStartPosition;
-    private Vector3 spriteDragStartPosition;
-    private void Start()
+    private GameObject player;
+    public GameObject enemy;
+    public int type;
+    public float fRadius = 3.0f;
+    public bool active = false;
+    public float x;
+    public float speedRotation;
+    private bool enemyTarget;
+
+    void Start()
     {
-        caster = transform.parent.parent;
-        target = transform.position;
-        //range = GameObject.FindGameObjectWithTag("Range");
+        player = gameObject.transform.parent.parent.gameObject;
     }
-    private void Update()
+
+    void Update()
     {
-        if (active)
+        if (active && type == 1)
         {
-            range.transform.Rotate(new Vector3(Input.GetAxis("Mouse Y"), Input.GetAxis("Mouse X"), 0) * Time.deltaTime * speed);
-            //target = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            //target.z = transform.position.z;
-            if (range.transform.position.x <= (caster.position.x + skillRange) || range.transform.position.y <= (caster.position.y + skillRange))
-            {
-                range.transform.position = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Camera.main.transform.position.z - mouseDragStartPosition.z));
-            }
-            Debug.Log(range.transform.position);
+            Vector3 targetScreenPos = Camera.main.WorldToScreenPoint(target.position);
+            targetScreenPos.z = 0;
+            Vector3 targetToMouseDir = Input.mousePosition - targetScreenPos;
+
+            Vector3 targetToMe = range.transform.position - target.position;
+            targetToMe.z = 0;
+
+            Vector3 newTargetToMe = Vector3.RotateTowards(targetToMe, targetToMouseDir, x, 0f);
+
+            range.transform.position = target.position + /*distance from target center to stay at*/  newTargetToMe.normalized;
+            float angle = Mathf.Atan2(targetToMe.y, targetToMe.x) * Mathf.Rad2Deg;
+            range.transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
+            
+
         }
     }
     private void OnMouseOver()
-    {        
+    {
         selected.sortingOrder = 2;
     }
     private void OnMouseExit()
@@ -43,13 +52,25 @@ public class UseSkill : MonoBehaviour
     }
     private void OnMouseDown()
     {
-        mouseDragStartPosition = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Camera.main.transform.position.z));
-        
-        range.SetActive(true);
-        range.transform.localPosition = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0));//new Vector2(caster.localPosition.x + 1, caster.localPosition.y);
-        range.transform.localPosition = new Vector3(range.transform.localPosition.x, range.transform.localPosition.x, 0);
-        range.transform.position = new Vector3(0, 0, 0);
-        spriteDragStartPosition = transform.localPosition;
-        active = true;
+        if (player.GetComponent<CharacterStats>().actions > 0)
+        {
+            range.GetComponent<Range>().player = player;
+            range.GetComponent<Range>().skill = gameObject;
+            range.GetComponent<BoxCollider2D>().size = new Vector2(2, 0.3f);
+            range.GetComponent<Range>().attack = true;
+            range.SetActive(true);
+            active = true;
+        }
     }
+    public void Action()
+    {
+        if (enemy != null)
+        {
+            enemy.GetComponent<EnemyStats>().currentHP -= player.GetComponent<CharacterStats>().str;
+            player.GetComponent<CharacterStats>().actions -= 1;
+            range.SetActive(false);
+            active = false;
+        }
+    }
+
 }

@@ -1,12 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
-public class CharacterStats : MonoBehaviour
+public class EnemyStats : MonoBehaviour
 {
-    // Start is called before the first frame update
-
     public string characterName;
     public int maxHP;
     public int currentHP;
@@ -14,8 +12,9 @@ public class CharacterStats : MonoBehaviour
     public int def;
     public int haste;
     public int actions;
-    public int nextLevelExp;
-    public int currentExp;
+    public int Exp;
+
+    public bool isTarget;
 
     public TMP_Text Hp;
     public TMP_Text Str;
